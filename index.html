@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Technology Quiz</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+    background:linear-gradient(135deg,#0f172a,#2563eb);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+.container{
+    background:#fff;
+    width:100%;
+    max-width:700px;
+    border-radius:12px;
+    padding:30px;
+    box-shadow:0 10px 25px rgba(0,0,0,.3);
+}
+
+h1{
+    text-align:center;
+    color:#1e3a8a;
+    margin-bottom:10px;
+}
+
+.subtitle{
+    text-align:center;
+    color:#555;
+    margin-bottom:25px;
+}
+
+.progress{
+    font-weight:bold;
+    margin-bottom:15px;
+    color:#2563eb;
+}
+
+.question{
+    font-size:1.25rem;
+    margin-bottom:20px;
+    color:#222;
+}
+
+.option{
+    display:block;
+    width:100%;
+    text-align:left;
+    margin:10px 0;
+    padding:14px;
+    border:2px solid #ddd;
+    border-radius:8px;
+    background:#fafafa;
+    cursor:pointer;
+    transition:.25s;
+    font-size:16px;
+}
+
+.option:hover{
+    background:#eef4ff;
+    border-color:#2563eb;
+}
+
+.option.correct{
+    background:#d1fae5;
+    border-color:#10b981;
+}
+
+.option.wrong{
+    background:#fee2e2;
+    border-color:#ef4444;
+}
+
+.feedback{
+    margin-top:18px;
+    padding:15px;
+    border-left:5px solid #2563eb;
+    background:#f5f9ff;
+    display:none;
+}
+
+.controls{
+    display:flex;
+    justify-content:space-between;
+    margin-top:25px;
+    gap:10px;
+}
+
+button{
+    padding:12px 18px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:16px;
+    color:white;
+}
+
+#nextBtn{
+    background:#2563eb;
+}
+
+#restartBtn{
+    background:#16a34a;
+}
+
+#reviewBtn{
+    background:#9333ea;
+}
+
+button:hover{
+    opacity:.92;
+}
+
+.hidden{
+    display:none;
+}
+
+.score{
+    font-size:26px;
+    color:#1d4ed8;
+    margin:20px 0;
+    text-align:center;
+}
+
+.review-item{
+    border:1px solid #ddd;
+    border-radius:8px;
+    padding:15px;
+    margin:15px 0;
+}
+
+.correct-text{
+    color:#16a34a;
+    font-weight:bold;
+}
+
+.wrong-text{
+    color:#dc2626;
+    font-weight:bold;
+}
+
+@media(max-width:600px){
+
+    .container{
+        padding:20px;
+    }
+
+    .controls{
+        flex-direction:column;
+    }
+
+    button{
+        width:100%;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h1>🤖 AI Technology Quiz</h1>
+<p class="subtitle">Test your knowledge with five AI questions!</p>
+
+<div id="quizSection">
+
+<div class="progress" id="progress"></div>
+
+<div class="question" id="question"></div>
+
+<div id="options"></div>
+
+<div class="feedback" id="feedback"></div>
+
+<div class="controls">
+<button id="nextBtn" disabled>Next Question</button>
+</div>
+
+</div>
+
+<div id="resultSection" class="hidden">
+
+<h2 style="text-align:center;">Quiz Completed!</h2>
+
+<div class="score" id="score"></div>
+
+<div class="controls">
+<button id="restartBtn">Retake Quiz</button>
+<button id="reviewBtn">Review Answers</button>
+</div>
+
+</div>
+
+<div id="reviewSection" class="hidden">
+
+<h2 style="text-align:center;margin-bottom:20px;">Answer Review</h2>
+
+<div id="reviewContent"></div>
+
+<div class="controls">
+<button id="restartBtn2">Retake Quiz</button>
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const quiz = [
+
+{
+question:"1. What does AI stand for?",
+options:[
+"Automated Internet",
+"Artificial Intelligence",
+"Advanced Integration",
+"Applied Information"
+],
+answer:1,
+explanation:"Artificial Intelligence (AI) refers to computer systems designed to perform tasks that normally require human intelligence."
+},
+
+{
+question:"2. Which type of machine learning learns using labeled examples?",
+options:[
+"Reinforcement Learning",
+"Unsupervised Learning",
+"Supervised Learning",
+"Deep Learning"
+],
+answer:2,
+explanation:"Supervised learning trains models using labeled data where the correct output is already known."
+},
+
+{
+question:"3. Which AI model architecture is widely used for modern chatbots such as ChatGPT?",
+options:[
+"Decision Trees",
+"Transformers",
+"Linear Regression",
+"Naive Bayes"
+],
+answer:1,
+explanation:"Transformer architectures introduced powerful attention mechanisms and became the foundation of modern large language models."
+},
+
+{
+question:"4. Which of the following is a real-world application of AI?",
+options:[
+"Spam email filtering",
+"Handwritten letter delivery",
+"Mechanical typewriters",
+"Film cameras"
+],
+answer:0,
+explanation:"AI is commonly used in email services to detect and filter spam automatically."
+},
+
+{
+question:"5. Why is high-quality training data important in AI?",
+options:[
+"It makes computers heavier",
+"It reduces internet usage",
+"It helps models make accurate and reliable predictions",
+"It removes the need for algorithms"
+],
+answer:2,
+explanation:"AI systems learn patterns from data. Better-quality data generally leads to better model performance."
+}
+
+];
+
+let currentQuestion=0;
+let score=0;
+let selected=false;
+let userAnswers=[];
+
+const question=document.getElementById("question");
+const options=document.getElementById("options");
+const feedback=document.getElementById("feedback");
+const progress=document.getElementById("progress");
+const nextBtn=document.getElementById("nextBtn");
+
+function loadQuestion(){
+
+selected=false;
+nextBtn.disabled=true;
+
+feedback.style.display="none";
+feedback.innerHTML="";
+
+progress.textContent=`Question ${currentQuestion+1} of ${quiz.length}`;
+
+question.textContent=quiz[currentQuestion].question;
+
+options.innerHTML="";
+
+quiz[currentQuestion].options.forEach((opt,index)=>{
+
+const btn=document.createElement("button");
+
+btn.className="option";
+btn.textContent=opt;
+
+btn.onclick=()=>selectAnswer(index,btn);
+
+options.appendChild(btn);
+
+});
+
+}
+
+function selectAnswer(index,button){
+
+if(selected) return;
+
+selected=true;
+
+const correct=quiz[currentQuestion].answer;
+
+const all=document.querySelectorAll(".option");
+
+all.forEach(btn=>btn.disabled=true);
+
+if(index===correct){
+
+button.classList.add("correct");
+score++;
+
+}else{
+
+button.classList.add("wrong");
+all[correct].classList.add("correct");
+
+}
+
+userAnswers.push({
+question:quiz[currentQuestion].question,
+selected:quiz[currentQuestion].options[index],
+correct:quiz[currentQuestion].options[correct],
+isCorrect:index===correct,
+explanation:quiz[currentQuestion].explanation
+});
+
+feedback.style.display="block";
+
+feedback.innerHTML="<strong>"+(index===correct?"✅ Correct!":"❌ Incorrect!")+"</strong><br><br>"+quiz[currentQuestion].explanation;
+
+nextBtn.disabled=false;
+
+}
+
+nextBtn.onclick=()=>{
+
+currentQuestion++;
+
+if(currentQuestion<quiz.length){
+
+loadQuestion();
+
+}else{
+
+showResults();
+
+}
+
+};
+
+function showResults(){
+
+document.getElementById("quizSection").classList.add("hidden");
+
+document.getElementById("resultSection").classList.remove("hidden");
+
+document.getElementById("score").innerHTML=
+`You scored <strong>${score}</strong> out of <strong>${quiz.length}</strong><br><br>
+${score===5?"🏆 Excellent! AI Expert!":
+score>=4?"🎉 Great job!":
+score>=3?"👍 Nice work!":
+"📚 Keep learning and try again!"}`;
+
+}
+
+document.getElementById("reviewBtn").onclick=()=>{
+
+document.getElementById("resultSection").classList.add("hidden");
+
+document.getElementById("reviewSection").classList.remove("hidden");
+
+const review=document.getElementById("reviewContent");
+
+review.innerHTML="";
+
+userAnswers.forEach((item,i)=>{
+
+review.innerHTML+=`
+<div class="review-item">
+
+<h3>Question ${i+1}</h3>
+
+<p><strong>${item.question}</strong></p>
+
+<p>Your answer:
+<span class="${item.isCorrect?'correct-text':'wrong-text'}">
+${item.selected}
+</span></p>
+
+<p>Correct answer:
+<span class="correct-text">${item.correct}</span></p>
+
+<p><strong>Explanation:</strong> ${item.explanation}</p>
+
+</div>
+`;
+
+});
+
+};
+
+function restartQuiz(){
+
+currentQuestion=0;
+score=0;
+userAnswers=[];
+
+document.getElementById("reviewSection").classList.add("hidden");
+document.getElementById("resultSection").classList.add("hidden");
+document.getElementById("quizSection").classList.remove("hidden");
+
+loadQuestion();
+
+}
+
+document.getElementById("restartBtn").onclick=restartQuiz;
+document.getElementById("restartBtn2").onclick=restartQuiz;
+
+loadQuestion();
+
+</script>
+
+</body>
+</html>
